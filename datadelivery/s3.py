@@ -72,7 +72,10 @@ class S3(object):
         :return: S3Bucket
         """
         url_suffix = 's3-buckets/?name={}'.format(bucket_name)
-        return S3Bucket(self._get_request(url_suffix)[0])
+        items = self._get_request(url_suffix)
+        if items:
+            return S3Bucket(items[0])
+        raise NotFoundException("No bucket found with name {}".format(bucket_name))
 
     def create_bucket(self, bucket_name):
         """
