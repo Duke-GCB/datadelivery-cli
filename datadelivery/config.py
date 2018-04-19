@@ -4,11 +4,12 @@ import yaml
 
 CONFIG_FILENAME_ENV = 'DATA_DELIVERY_CONFIG'
 DEFAULT_CONFIG_FILENAME = '~/.datadelivery.yml'
-DEFAULT_D4S2_URL = 'http://127.0.0.1:8000/api/v2/'
+BASE_DATA_DELIVERY_URL = 'https://datadelivery.genome.duke.edu'
+DEFAULT_DATA_DELIVERY_URL = '{}/api/v2/'.format(BASE_DATA_DELIVERY_URL)
 DEFAULT_ENDPOINT_NAME = 'default'
 
-ENTER_D4S2_TOKEN_PROMPT = """Please request a D4S2 token from ?
-Enter D4S2 token (or press enter to quit):"""
+ENTER_DATA_DELIVERY_TOKEN_PROMPT = """Please request a token from {}
+Enter token (or press enter to quit):""".format(BASE_DATA_DELIVERY_URL)
 
 
 class ConfigFile(object):
@@ -25,7 +26,7 @@ class ConfigFile(object):
             return self.read_config()
 
     def _prompt_user_for_token(self):
-        token = self.prompt_user(ENTER_D4S2_TOKEN_PROMPT)
+        token = self.prompt_user(ENTER_DATA_DELIVERY_TOKEN_PROMPT)
         if token:
             return token
         else:
@@ -54,7 +55,7 @@ class ConfigFile(object):
 class Config(object):
     def __init__(self, data):
         self.token = data['token']
-        self.d4s2_url = data.get('d4s2_url', DEFAULT_D4S2_URL)
+        self.data_delivery_url = data.get('data_delivery_url', DEFAULT_DATA_DELIVERY_URL)
         self.endpoint_name = data.get('endpoint_name', DEFAULT_ENDPOINT_NAME)
 
 

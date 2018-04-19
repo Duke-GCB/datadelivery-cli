@@ -1,14 +1,14 @@
 from unittest import TestCase
 from mock import MagicMock, patch, call, mock_open
 from datadelivery.config import ConfigFile, Config, ConfigSetupAbandoned, \
-    DEFAULT_D4S2_URL, DEFAULT_ENDPOINT_NAME, ENTER_D4S2_TOKEN_PROMPT
+    DEFAULT_DATA_DELIVERY_URL, DEFAULT_ENDPOINT_NAME, ENTER_DATA_DELIVERY_TOKEN_PROMPT
 
 
 class ConfigFileTestCase(TestCase):
     @patch('datadelivery.config.Config')
     def test_read_config(self, mock_config):
         config_file = ConfigFile()
-        with patch("__builtin__.open", mock_open(read_data="data")) as mock_file:
+        with patch("__builtin__.open", mock_open(read_data="data")):
             config = config_file.read_config()
             self.assertEqual(config, mock_config.return_value)
             mock_config.assert_called_with("data")
@@ -25,7 +25,6 @@ class ConfigFileTestCase(TestCase):
     @patch('datadelivery.config.os')
     def test_read_or_create_config_when_file_exists(self, mock_os):
         mock_os.path.exists.return_value = True
-        mock_prompt = MagicMock()
         mock_read_config = MagicMock()
 
         config_file = ConfigFile()
@@ -47,7 +46,7 @@ class ConfigFileTestCase(TestCase):
         config_file.write_new_config = mock_write_new_config
 
         config = config_file.read_or_create_config()
-        mock_prompt_user.assert_called_with(ENTER_D4S2_TOKEN_PROMPT)
+        mock_prompt_user.assert_called_with(ENTER_DATA_DELIVERY_TOKEN_PROMPT)
         mock_write_new_config.assert_called_with('secretToken')
         self.assertEqual(config, mock_read_config.return_value)
 
@@ -72,12 +71,12 @@ class ConfigTestCase(TestCase):
     def test_constructor(self):
         config = Config({
             'token': 'secret1',
-            'd4s2_url': 'd4s2URL',
+            'data_delivery_url': 'dataDeliveryURL',
             'endpoint_name': 'goodEndpoint',
         })
 
         self.assertEqual(config.token, 'secret1')
-        self.assertEqual(config.d4s2_url, 'd4s2URL')
+        self.assertEqual(config.data_delivery_url, 'dataDeliveryURL')
         self.assertEqual(config.endpoint_name, 'goodEndpoint')
 
     def test_constructor_defaults(self):
@@ -86,5 +85,5 @@ class ConfigTestCase(TestCase):
         })
 
         self.assertEqual(config.token, 'secret1')
-        self.assertEqual(config.d4s2_url, DEFAULT_D4S2_URL)
+        self.assertEqual(config.data_delivery_url, DEFAULT_DATA_DELIVERY_URL)
         self.assertEqual(config.endpoint_name, DEFAULT_ENDPOINT_NAME)
