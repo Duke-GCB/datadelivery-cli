@@ -16,21 +16,29 @@ class ConfigFile(object):
         self.filename = os.path.expanduser(filename)
 
     def read_or_create_config(self):
-        try:
+        if os.path.exists(self.filename):
             return self.read_config()
-        except IOError:
+        else:
             token = self._prompt_user_for_token()
             print("Writing new config file at {}".format(self.filename))
             self.write_new_config(token)
             return self.read_config()
 
-    @staticmethod
-    def _prompt_user_for_token():
-        token = input(ENTER_D4S2_TOKEN_PROMPT)
+    def _prompt_user_for_token(self):
+        token = self.prompt_user(ENTER_D4S2_TOKEN_PROMPT)
         if token:
             return token
         else:
             raise ConfigSetupAbandoned()
+
+    @staticmethod
+    def prompt_user(message):
+        """
+        Get command line input from the user
+        :param message: str: message to show user
+        :return: str: value user entered
+        """
+        return input(message)
 
     def read_config(self):
         with open(self.filename, 'r') as stream:
@@ -47,7 +55,7 @@ class Config(object):
     def __init__(self, data):
         self.token = data['token']
         self.d4s2_url = data.get('d4s2_url', DEFAULT_D4S2_URL)
-        self.endpoint_name = data.get('_endpoint_name', DEFAULT_ENDPOINT_NAME)
+        self.endpoint_name = data.get('endpoint_name', DEFAULT_ENDPOINT_NAME)
 
 
 class ConfigSetupAbandoned(Exception):
