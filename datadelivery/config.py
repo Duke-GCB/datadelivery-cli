@@ -19,13 +19,18 @@ class ConfigFile(object):
         try:
             return self.read_config()
         except IOError:
-            token = input(ENTER_D4S2_TOKEN_PROMPT)
-            if token:
-                print("Writing new config file at {}".format(self.filename))
-                self.write_new_config(token)
-                return self.read_config()
-            else:
-                raise ConfigSetupAbandoned()
+            token = self._prompt_user_for_token()
+            print("Writing new config file at {}".format(self.filename))
+            self.write_new_config(token)
+            return self.read_config()
+
+    @staticmethod
+    def _prompt_user_for_token():
+        token = input(ENTER_D4S2_TOKEN_PROMPT)
+        if token:
+            return token
+        else:
+            raise ConfigSetupAbandoned()
 
     def read_config(self):
         with open(self.filename, 'r') as stream:
