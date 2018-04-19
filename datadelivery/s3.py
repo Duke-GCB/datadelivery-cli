@@ -12,7 +12,7 @@ class S3(object):
         self.current_user = self._get_current_user_for_endpoint(self.current_endpoint)
 
     def _build_url(self, url_suffix):
-        return '{}{}'.format(self.config.d4s2_url, url_suffix)
+        return '{}{}'.format(self.config.data_delivery_url, url_suffix)
 
     def _build_headers(self):
         return {

@@ -5,7 +5,7 @@ from datadelivery.s3 import S3, NotFoundException
 
 class S3TestCase(TestCase):
     def setUp(self):
-        self.config = MagicMock(endpoint_name='main_endpoint', d4s2_url='someurl/', token='secret')
+        self.config = MagicMock(endpoint_name='main_endpoint', data_delivery_url='someurl/', token='secret')
         self.user_agent_str = 'tool/1.0'
         self.current_user_id = 456
         self.current_endpoint_id = 123
