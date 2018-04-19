@@ -55,7 +55,7 @@ class ConfigFile(object):
 class Config(object):
     def __init__(self, data):
         self.token = data['token']
-        self.data_delivery_url = data.get('data_delivery_url', DEFAULT_DATA_DELIVERY_URL)
+        self.url = data.get('url', DEFAULT_DATA_DELIVERY_URL)
         self.endpoint_name = data.get('endpoint_name', DEFAULT_ENDPOINT_NAME)
 
 

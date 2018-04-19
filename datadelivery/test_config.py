@@ -71,12 +71,12 @@ class ConfigTestCase(TestCase):
     def test_constructor(self):
         config = Config({
             'token': 'secret1',
-            'data_delivery_url': 'dataDeliveryURL',
+            'url': 'dataDeliveryURL',
             'endpoint_name': 'goodEndpoint',
         })
 
         self.assertEqual(config.token, 'secret1')
-        self.assertEqual(config.data_delivery_url, 'dataDeliveryURL')
+        self.assertEqual(config.url, 'dataDeliveryURL')
         self.assertEqual(config.endpoint_name, 'goodEndpoint')
 
     def test_constructor_defaults(self):
@@ -85,5 +85,5 @@ class ConfigTestCase(TestCase):
         })
 
         self.assertEqual(config.token, 'secret1')
-        self.assertEqual(config.data_delivery_url, DEFAULT_DATA_DELIVERY_URL)
+        self.assertEqual(config.url, DEFAULT_DATA_DELIVERY_URL)
         self.assertEqual(config.endpoint_name, DEFAULT_ENDPOINT_NAME)
