@@ -264,3 +264,33 @@ class S3TestCase(TestCase):
         mock_requests.post.assert_has_calls([
             call('someurl/s3-deliveries/888/send/', headers=self.expected_headers, json={}),
         ])
+
+    @patch('datadelivery.s3.requests')
+    def test_send_delivery_resend(self, mock_requests):
+        self.setup_responses(mock_requests.get, [
+            self.current_endpoint_response,
+            self.current_user_response,
+        ])
+        self.setup_responses(mock_requests.post, [
+            {
+                'id': 888,
+                'bucket': 222,
+                'from_user': self.current_user_id,
+                'to_user': 444,
+                'state': 1,
+                'user_message': 'Testing',
+                'decline_reason': '',
+                'performed_by': '',
+                'delivery_email_text': '',
+            }
+        ])
+
+        s3 = S3(self.config, self.user_agent_str)
+        s3_delivery = s3.send_delivery(
+            delivery=MagicMock(id=888),
+            force=True
+        )
+
+        mock_requests.post.assert_has_calls([
+            call('someurl/s3-deliveries/888/send/?force=true', headers=self.expected_headers, json={}),
+        ])

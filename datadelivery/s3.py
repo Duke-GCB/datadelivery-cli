@@ -107,8 +107,10 @@ class S3(object):
         }
         return S3Delivery(self._post_request('s3-deliveries/', data=data))
 
-    def send_delivery(self, delivery):
+    def send_delivery(self, delivery, force=None):
         url_suffix = 's3-deliveries/{}/send/'.format(delivery.id)
+        if force:
+            url_suffix += "?force=true"
         return S3Delivery(self._post_request(url_suffix, data={}))
 
 

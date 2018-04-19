@@ -59,13 +59,18 @@ class ArgParser(object):
             type=argparse.FileType('r'),
             help="Filename containing a message to be sent with the delivery. Pass - to read from stdin."
         )
+        deliver_parser.add_argument("--resend",
+                                    action='store_true',
+                                    default=False,
+                                    dest='resend',
+                                    help="Resend delivery email.")
 
     def _run_deliver(self, args):
         """
         Method called for running the deliver command.
         """
         user_message = self.read_argument_file_contents(args.msg_file)
-        self.target_object.deliver(args.bucket_name, args.email, user_message)
+        self.target_object.deliver(args.bucket_name, args.email, user_message, args.resend)
 
     @staticmethod
     def read_argument_file_contents(infile):
