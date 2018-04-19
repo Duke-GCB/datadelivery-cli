@@ -14,17 +14,18 @@ class ArgParser(object):
         """
         self.version_str = version_str
         self.target_object = target_object
+        self.argument_parser = self._create_argument_parser()
 
-    def parse_and_run_commands(self):
+    def parse_and_run_commands(self, args=None):
         """
-        Parse command line arguments and run the appropriate command or show help.
+        Parses arguments from args or command line if args is None.
+        :param args: optional set of arguments to parse
         """
-        argument_parser = self._create_argument_parser()
-        parsed_args = argument_parser.parse_args()
+        parsed_args = self.argument_parser.parse_args(args)
         if hasattr(parsed_args, 'func'):
             parsed_args.func(parsed_args)
         else:
-            argument_parser.print_help()
+            self.argument_parser.print_help()
 
     def _create_argument_parser(self):
         argument_parser = argparse.ArgumentParser(description=DESCRIPTION_STR.format(self.version_str))
