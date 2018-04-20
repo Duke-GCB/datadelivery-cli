@@ -22,10 +22,10 @@ class Commands(object):
         :param resend: bool: is this a resend of an existing delivery
         """
         s3 = self._create_s3()
-        to_user = s3.get_user_by_email(email)
+        to_s3user = s3.get_s3user_by_email(email)
         try:
             bucket = s3.get_bucket_by_name(bucket_name)
         except NotFoundException:
             bucket = s3.create_bucket(bucket_name)
-        delivery = s3.create_delivery(bucket, to_user, user_message)
+        delivery = s3.create_delivery(bucket, to_s3user, user_message)
         s3.send_delivery(delivery, resend)

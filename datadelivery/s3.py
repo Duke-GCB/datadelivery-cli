@@ -9,7 +9,7 @@ class S3(object):
         self.config = config
         self.user_agent_str = user_agent_str
         self.current_endpoint = self._get_current_endpoint()
-        self.current_user = self._get_current_user_for_endpoint(self.current_endpoint)
+        self.current_s3user = self._get_current_s3user()
 
     def _build_url(self, url_suffix):
         return '{}{}'.format(self.config.url, url_suffix)
@@ -52,18 +52,41 @@ class S3(object):
             return S3Endpoint(endpoint_response)
         raise NotFoundException("No endpoint found for s3 url: {}".format(self.config.s3_url))
 
-    def _get_current_user_for_endpoint(self, endpoint):
+    def get_current_user(self):
         """
-        Find the S3User that matches the current user
-        :return: S3User
+        Find the User that matches the current user under the endpoint
+        :return: User
         """
-        url_suffix = 's3-endpoints/{}/current-user/'.format(endpoint.id)
-        return S3User(self._get_request(url_suffix))
+        return User(self._get_request('users/current-user/'))
 
-    def get_user_by_email(self, email):
-        for endpoint_response in self._get_request('s3-users/?email={}'.format(email)):
+    def _get_current_s3user(self):
+        user = self.get_current_user()
+        return self.get_s3user_by_user(user)
+
+    def get_s3user_by_user(self, user):
+        """
+        Fetch s3 user that has the current endpoint and user
+        :param endpoint: S3Endpoint: the s3 service are we using
+        :param user: User: user who we want to find a S3User for
+        :return: S3User or NotFoundException
+        """
+        url_suffix = 's3-users/?endpoint={}&user={}'.format(self.current_endpoint.id, user.id)
+        for endpoint_response in self._get_request(url_suffix):
             return S3User(endpoint_response)
-        raise NotFoundException("No user found with email {}".format(email))
+        raise NotFoundException("No s3 user found for endpoint {} and user {}".format(
+            self.current_endpoint.id, user.id))
+
+    def get_s3user_by_email(self, email):
+        """
+        Fetch s3 user that has the current endpoint and email
+        :param email: str: email address of user to fetch
+        :return: S3User or NotFoundException
+        """
+        url_suffix = 's3-users/?endpoint={}&email={}'.format(self.current_endpoint.id, email)
+        for endpoint_response in self._get_request(url_suffix):
+            return S3User(endpoint_response)
+        raise NotFoundException("No s3 user found with email {} at endpoint {}".format(
+            email, self.current_endpoint.id))
 
     def get_bucket_by_name(self, bucket_name):
         """
@@ -85,33 +108,48 @@ class S3(object):
         """
         data = {
             'name': bucket_name,
-            'owner': self.current_user.id,
+            'owner': self.current_s3user.id,
             'endpoint': self.current_endpoint.id,
         }
         return S3Bucket(self._post_request('s3-buckets/', data=data))
 
-    def create_delivery(self, bucket, to_user, user_message):
+    def create_delivery(self, bucket, to_s3user, user_message):
         """
         Create delivery of bucket to to_user with user_message.
         Delivery will still need to be sent
         :param bucket: S3Bucket: bucket to deliver (should be owned by current user)
-        :param to_user: S3User: user to send the bucket to
+        :param to_s3user: S3User: user to send the bucket to
         :param user_message: str: message to send with the delivery
         :return: S3Delivery
         """
         data = {
             'bucket': bucket.id,
-            'from_user': self.current_user.id,
-            'to_user': to_user.id,
+            'from_user': self.current_s3user.id,
+            'to_user': to_s3user.id,
             'user_message': user_message
         }
         return S3Delivery(self._post_request('s3-deliveries/', data=data))
 
     def send_delivery(self, delivery, force=None):
+        """
+        Request the datadelivery service to process the delivery.
+        :param delivery: S3Delivery: the delivery to process
+        :param force: bool: set to True to allow resending
+        :return: S3Delivery
+        """
         url_suffix = 's3-deliveries/{}/send/'.format(delivery.id)
         if force:
             url_suffix += "?force=true"
         return S3Delivery(self._post_request(url_suffix, data={}))
+
+
+class User(object):
+    def __init__(self, data):
+        self.id = data['id']
+        self.username = data['username']
+        self.first_name = data['first_name']
+        self.last_name = data['last_name']
+        self.email = data['email']
 
 
 class S3Endpoint(object):
