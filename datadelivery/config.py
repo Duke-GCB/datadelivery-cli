@@ -1,6 +1,8 @@
 from __future__ import print_function
 import os
 import yaml
+from six.moves import input
+
 
 CONFIG_FILENAME_ENV = 'DATA_DELIVERY_CONFIG'
 DEFAULT_CONFIG_FILENAME = '~/.datadelivery.yml'

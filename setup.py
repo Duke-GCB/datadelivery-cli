@@ -8,7 +8,8 @@ setup(name='datadelivery',
       packages=['datadelivery'],
       install_requires=[
           'requests',
-          'PyYAML'
+          'PyYAML',
+          'six',
       ],
       entry_points={
           'console_scripts': [
