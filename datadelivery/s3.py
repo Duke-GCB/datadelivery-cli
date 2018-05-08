@@ -40,7 +40,11 @@ class S3(object):
         try:
             response.raise_for_status()
         except requests.HTTPError:
-            raise S3Exception(response.text)
+            message = response.text
+            data = response.json()
+            if 'detail' in data:
+                message = data['detail']
+            raise S3Exception(message)
 
     def _get_current_endpoint(self):
         """
