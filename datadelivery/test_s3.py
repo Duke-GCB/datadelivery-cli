@@ -285,3 +285,27 @@ class S3TestCase(TestCase):
         mock_requests.post.assert_has_calls([
             call('someurl/s3-deliveries/888/send/?force=true', headers=self.expected_headers, json={}),
         ])
+
+    @patch('datadelivery.s3.requests')
+    def test_make_message_for_http_error(self, mock_requests):
+        response = MagicMock()
+        response.text = None
+        response.json.return_value = {'detail': 'Invalid bucket name'}
+        msg = S3.make_message_for_http_error(response)
+        self.assertEqual('Invalid bucket name', msg)
+
+    @patch('datadelivery.s3.requests')
+    def test_make_message_for_http_error_no_detail(self, mock_requests):
+        response = MagicMock()
+        response.text = '{ unexpected: json }'
+        response.json.return_value = {}
+        msg = S3.make_message_for_http_error(response)
+        self.assertEqual('{ unexpected: json }', msg)
+
+    @patch('datadelivery.s3.requests')
+    def test_make_message_for_http_error_no_json(self, mock_requests):
+        response = MagicMock()
+        response.text = 'Invalid bucket name'
+        response.json.side_effect = ValueError("No JSON object could be decoded")
+        msg = S3.make_message_for_http_error(response)
+        self.assertEqual('Invalid bucket name', msg)

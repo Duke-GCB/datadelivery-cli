@@ -55,6 +55,29 @@ class ConfigFileTestCase(TestCase):
         self.assertEqual(config.endpoint_name, DEFAULT_ENDPOINT_NAME)
 
     @patch('datadelivery.config.os')
+    def test_read_or_create_config_no_token_in_file(self, mock_os):
+        mock_os.path.exists.return_value = True
+        mock_prompt_user = MagicMock()
+        mock_prompt_user.return_value = 'secretToken'
+        mock_read_config = MagicMock()
+        mock_read_config.return_value = Config({})
+        mock_write_new_config = MagicMock()
+
+        config_file = ConfigFile()
+        config_file.prompt_user = mock_prompt_user
+        config_file.read_config = mock_read_config
+        config_file.write_new_config = mock_write_new_config
+
+        with patch("__builtin__.open", mock_open()) as mock_file:
+            config = config_file.read_or_create_config()
+        mock_prompt_user.assert_called_with(ENTER_DATA_DELIVERY_TOKEN_PROMPT)
+        written_text = ''.join([call_args[0][0] for call_args in mock_file.return_value.write.call_args_list])
+        self.assertEqual(written_text.strip(), '{token: secretToken}')
+        self.assertEqual(config.token, 'secretToken')
+        self.assertEqual(config.url, DEFAULT_DATA_DELIVERY_URL)
+        self.assertEqual(config.endpoint_name, DEFAULT_ENDPOINT_NAME)
+
+    @patch('datadelivery.config.os')
     def test_read_or_create_config_when_user_doesnt_enter_token(self, mock_os):
         mock_os.path.exists.return_value = False
         mock_prompt_user = MagicMock()

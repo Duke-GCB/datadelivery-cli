@@ -40,11 +40,18 @@ class S3(object):
         try:
             response.raise_for_status()
         except requests.HTTPError:
-            message = response.text
+            raise S3Exception(S3.make_message_for_http_error(response))
+
+    @staticmethod
+    def make_message_for_http_error(response):
+        message = response.text
+        try:
             data = response.json()
             if 'detail' in data:
                 message = data['detail']
-            raise S3Exception(message)
+        except ValueError:
+            pass  # response was not JSON
+        return message
 
     def _get_current_endpoint(self):
         """
