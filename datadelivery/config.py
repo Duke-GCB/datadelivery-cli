@@ -19,13 +19,14 @@ class ConfigFile(object):
         self.filename = os.path.expanduser(filename)
 
     def read_or_create_config(self):
+        config = Config({})
         if os.path.exists(self.filename):
-            return self.read_config()
-        else:
-            token = self._prompt_user_for_token()
-            print("Writing new config file at {}".format(self.filename))
-            self.write_new_config(token)
-            return self.read_config()
+            config = self.read_config()
+        if not config.token:
+            config.token = self._prompt_user_for_token()
+            print("Writing config file at {}".format(self.filename))
+            self.write_config(config)
+        return config
 
     def _prompt_user_for_token(self):
         token = self.prompt_user(ENTER_DATA_DELIVERY_TOKEN_PROMPT)
@@ -47,18 +48,38 @@ class ConfigFile(object):
         with open(self.filename, 'r') as stream:
             return Config(yaml.safe_load(stream))
 
-    def write_new_config(self, token):
+    def write_config(self, config):
         with open(self.filename, 'w+') as stream:
-            yaml.safe_dump({
-                'token': token
-            }, stream)
+            yaml.safe_dump(config.to_dict(), stream)
 
 
 class Config(object):
     def __init__(self, data):
-        self.token = data['token']
-        self.url = data.get('url', DEFAULT_DATA_DELIVERY_URL)
-        self.endpoint_name = data.get('endpoint_name', DEFAULT_ENDPOINT_NAME)
+        self.token = data.get('token')
+        self._url = data.get('url')
+        self._endpoint_name = data.get('endpoint_name')
+
+    @property
+    def url(self):
+        if not self._url:
+            return DEFAULT_DATA_DELIVERY_URL
+        return self._url
+
+    @property
+    def endpoint_name(self):
+        if not self._endpoint_name:
+            return DEFAULT_ENDPOINT_NAME
+        return self._endpoint_name
+
+    def to_dict(self):
+        data = {}
+        if self.token:
+            data['token'] = self.token
+        if self._url:
+            data['url'] = self._url
+        if self._endpoint_name:
+            data['endpoint_name'] = self._endpoint_name
+        return data
 
 
 class ConfigSetupAbandoned(Exception):

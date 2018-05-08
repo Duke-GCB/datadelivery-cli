@@ -14,10 +14,10 @@ class ConfigFileTestCase(TestCase):
             mock_config.assert_called_with("data")
 
     @patch('datadelivery.config.Config')
-    def test_write_new_config(self, mock_config):
+    def test_write_config(self, mock_config):
         config_file = ConfigFile()
         with patch("__builtin__.open", mock_open()) as mock_file:
-            config_file.write_new_config(token='secret')
+            config_file.write_config(Config({'token': 'secret'}))
             write_call_args_list = mock_file.return_value.write.call_args_list
             written = ''.join([write_call_args[0][0] for write_call_args in write_call_args_list])
             self.assertEqual(written.strip(), '{token: secret}')
@@ -45,10 +45,14 @@ class ConfigFileTestCase(TestCase):
         config_file.read_config = mock_read_config
         config_file.write_new_config = mock_write_new_config
 
-        config = config_file.read_or_create_config()
+        with patch("__builtin__.open", mock_open()) as mock_file:
+            config = config_file.read_or_create_config()
         mock_prompt_user.assert_called_with(ENTER_DATA_DELIVERY_TOKEN_PROMPT)
-        mock_write_new_config.assert_called_with('secretToken')
-        self.assertEqual(config, mock_read_config.return_value)
+        written_text = ''.join([call_args[0][0] for call_args in mock_file.return_value.write.call_args_list])
+        self.assertEqual(written_text.strip(), '{token: secretToken}')
+        self.assertEqual(config.token, 'secretToken')
+        self.assertEqual(config.url, DEFAULT_DATA_DELIVERY_URL)
+        self.assertEqual(config.endpoint_name, DEFAULT_ENDPOINT_NAME)
 
     @patch('datadelivery.config.os')
     def test_read_or_create_config_when_user_doesnt_enter_token(self, mock_os):
