@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from unittest import TestCase
 from mock import MagicMock, patch, call
 from datadelivery.argparser import ArgParser
@@ -19,15 +20,16 @@ class ArgParserTestCase(TestCase):
         arg_parser.parse_and_run_commands(command_line_args.split(' '))
         target_object.deliver.assert_called_with('bucket1', 'joe@joe.com', '', False)
 
-    def test_simple_deliver_with_user_message(self):
+    @patch('datadelivery.argparser.ArgUtil')
+    def test_simple_deliver_with_user_message(self, mock_arg_util):
         version_str = '1.0'
         target_object = MagicMock()
-        mock_read_argument_file_contents = MagicMock()
-        mock_read_argument_file_contents.return_value = 'some text'
+        mock_arg_util.read_argument_file_contents.return_value = 'some text'
+
         arg_parser = ArgParser(version_str, target_object)
-        arg_parser.read_argument_file_contents = mock_read_argument_file_contents
         command_line_args = 'deliver -b bucket1 --email joe@joe.com --msg-file setup.py'
         arg_parser.parse_and_run_commands(command_line_args.split(' '))
+
         target_object.deliver.assert_called_with('bucket1', 'joe@joe.com', 'some text', False)
 
     def test_simple_deliver_ddsclient_project_flag(self):

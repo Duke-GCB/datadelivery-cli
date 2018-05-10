@@ -4,7 +4,7 @@ import requests
 CONTENT_TYPE = 'application/json'
 
 
-class S3(object):
+class DataDeliveryApi(object):
     def __init__(self, config, user_agent_str):
         self.config = config
         self.user_agent_str = user_agent_str
@@ -40,7 +40,7 @@ class S3(object):
         try:
             response.raise_for_status()
         except requests.HTTPError:
-            raise S3Exception(response.text)
+            raise DDException(response.text)
 
     def _get_current_endpoint(self):
         """
@@ -112,6 +112,17 @@ class S3(object):
             'endpoint': self.current_endpoint.id,
         }
         return S3Bucket(self._post_request('s3-buckets/', data=data))
+
+    def get_or_create_bucket(self, bucket_name):
+        """
+        Get existing bucket, if it doesn't exist create one and return it.
+        :param bucket_name: str: name of the bucket
+        :return: S3Bucket
+        """
+        try:
+            return self.get_bucket_by_name(bucket_name)
+        except NotFoundException:
+            return self.create_bucket(bucket_name)
 
     def create_delivery(self, bucket, to_s3user, user_message):
         """
@@ -192,5 +203,5 @@ class NotFoundException(Exception):
     pass
 
 
-class S3Exception(Exception):
+class DDException(Exception):
     pass

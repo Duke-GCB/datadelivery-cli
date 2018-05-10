@@ -1,6 +1,7 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
+import os
 from datadelivery.config import ConfigFile
-from datadelivery.s3 import S3, NotFoundException
+from datadelivery.datadelivery import DataDeliveryApi, NotFoundException
 
 APP_NAME = "datadelivery"
 
@@ -8,10 +9,17 @@ APP_NAME = "datadelivery"
 class Commands(object):
     def __init__(self, version_str):
         self.version_str = version_str
+        self._dd_api = None
 
-    def _create_s3(self):
+    @property
+    def dd_api(self):
+        if not self._dd_api:
+            self._dd_api = self._create_data_delivery_api()
+        return self._dd_api
+
+    def _create_data_delivery_api(self):
         config = ConfigFile().read_or_create_config()
-        return S3(config, user_agent_str='{}/{}'.format(APP_NAME, self.version_str))
+        return DataDeliveryApi(config, user_agent_str='{}/{}'.format(APP_NAME, self.version_str))
 
     def deliver(self, bucket_name, email, user_message, resend):
         """
@@ -21,11 +29,25 @@ class Commands(object):
         :param user_message: str: custom message to send in the delivery email
         :param resend: bool: is this a resend of an existing delivery
         """
-        s3 = self._create_s3()
-        to_s3user = s3.get_s3user_by_email(email)
-        try:
-            bucket = s3.get_bucket_by_name(bucket_name)
-        except NotFoundException:
-            bucket = s3.create_bucket(bucket_name)
-        delivery = s3.create_delivery(bucket, to_s3user, user_message)
-        s3.send_delivery(delivery, resend)
+        to_s3user = self.dd_api.get_s3user_by_email(email)
+        bucket = self.dd_api.get_or_create_bucket(bucket_name)
+        delivery = self.dd_api.create_delivery(bucket, to_s3user, user_message)
+        self.dd_api.send_delivery(delivery, resend)
+
+    def upload(self, bucket_name, file_folder_paths):
+        """
+        Upload files/folders to a bucket
+        :param bucket_name: str: name of the bucket to upload into
+        :param file_folder_paths: [str]: list of paths to upload
+        """
+        pass
+
+
+class CommandUtil(object):
+    @staticmethod
+    def get_file_paths(path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for filename in files:
+                result.append(os.path.join(root, filename))
+        return result

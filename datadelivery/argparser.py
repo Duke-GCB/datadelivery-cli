@@ -1,5 +1,8 @@
-import argparse
+import os
 import sys
+import argparse
+import six
+
 
 DESCRIPTION_STR = "datadelivery ({}) Deliver s3 projects to other users"
 
@@ -31,6 +34,7 @@ class ArgParser(object):
         argument_parser = argparse.ArgumentParser(description=DESCRIPTION_STR.format(self.version_str))
         subparsers = argument_parser.add_subparsers()
         self._add_deliver_command(subparsers)
+        self._add_upload_command(subparsers)
         return argument_parser
 
     def _add_deliver_command(self, subparsers):
@@ -69,8 +73,57 @@ class ArgParser(object):
         """
         Method called for running the deliver command.
         """
-        user_message = self.read_argument_file_contents(args.msg_file)
+        user_message = ArgUtil.read_argument_file_contents(args.msg_file)
         self.target_object.deliver(args.bucket_name, args.email, user_message, args.resend)
+
+    def _add_upload_command(self, subparsers):
+        """
+        Add upload command to sync local directories/files to a bucket
+        :param subparsers: subparser to add the command to
+        """
+        upload_parser = subparsers.add_parser('upload', description='Upload files/folders to a bucket.')
+        upload_parser.set_defaults(func=self._run_upload)
+        upload_parser.add_argument(
+            '-b', '--bucket-name', '-p', '--project-name',
+            metavar='BucketName',
+            type=str,
+            dest='bucket_name',
+            help="Name of the bucket to deliver",
+            required=True)
+        upload_parser.add_argument("folders",
+                                   metavar='Folders',
+                                   nargs="+",
+                                   help="Names of the files and/or folders to upload to the remote project.",
+                                   type=ArgUtil.paths_must_exists)
+
+    def _run_upload(self, args):
+        """
+        Method called for running the upload command.
+        """
+        self.target_object.upload(args.bucket_name, args.folders)
+
+
+class ArgUtil(object):
+    @staticmethod
+    def to_unicode(s):
+        """
+        Convert a command line string to utf8 unicode.
+        :param s: string to convert to unicode
+        :return: unicode string for argument
+        """
+        return s if six.PY3 else s.encode('utf-8')
+
+    @staticmethod
+    def paths_must_exists(path):
+        """
+        Raises error if path doesn't exist.
+        :param path: str path to check
+        :return: str same path passed in
+        """
+        path = ArgUtil.to_unicode(path)
+        if not os.path.exists(path):
+            raise argparse.ArgumentTypeError("{} is not a valid file/folder.".format(path))
+        return path
 
     @staticmethod
     def read_argument_file_contents(infile):

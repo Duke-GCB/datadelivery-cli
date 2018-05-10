@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 from unittest import TestCase
 from mock import MagicMock, patch, call
-from datadelivery.s3 import S3, NotFoundException
+from datadelivery.datadelivery import DataDeliveryApi, NotFoundException
 
 
-class S3TestCase(TestCase):
+class DataDeliveryApiTestCase(TestCase):
     def setUp(self):
         self.config = MagicMock(endpoint_name='main_endpoint', url='someurl/', token='secret')
         self.user_agent_str = 'tool/1.0'
@@ -55,20 +56,20 @@ class S3TestCase(TestCase):
             get_side_effects.append(mock_get_response)
         mock_method.side_effect = get_side_effects
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_constructor_finds_current_endpoint_and_user(self, mock_requests):
         self.setup_get_responses(mock_requests.get)
 
-        s3 = S3(self.config, self.user_agent_str)
+        api = DataDeliveryApi(self.config, self.user_agent_str)
 
-        self.assertEqual(s3.current_endpoint.id, self.current_endpoint_id)
-        self.assertEqual(s3.current_endpoint.url, 'http://somewhere.com')
+        self.assertEqual(api.current_endpoint.id, self.current_endpoint_id)
+        self.assertEqual(api.current_endpoint.url, 'http://somewhere.com')
 
-        self.assertEqual(s3.current_s3user.id, self.current_s3user_id)
-        self.assertEqual(s3.current_s3user.user, self.current_user_id)
-        self.assertEqual(s3.current_s3user.endpoint, self.current_endpoint_id)
-        self.assertEqual(s3.current_s3user.email, 'joe@joe.com')
-        self.assertEqual(s3.current_s3user.type, 'Normal')
+        self.assertEqual(api.current_s3user.id, self.current_s3user_id)
+        self.assertEqual(api.current_s3user.user, self.current_user_id)
+        self.assertEqual(api.current_s3user.endpoint, self.current_endpoint_id)
+        self.assertEqual(api.current_s3user.email, 'joe@joe.com')
+        self.assertEqual(api.current_s3user.type, 'Normal')
 
         mock_requests.get.assert_has_calls([
             call('someurl/s3-endpoints/?name=main_endpoint', headers=self.expected_headers),
@@ -76,7 +77,7 @@ class S3TestCase(TestCase):
             call('someurl/s3-users/?endpoint=123&user=222', headers=self.expected_headers),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_get_s3user_by_email(self, mock_requests):
         response = [
             {
@@ -89,8 +90,8 @@ class S3TestCase(TestCase):
         ]
         self.setup_get_responses(mock_requests.get, response)
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3user = s3.get_s3user_by_email('bob@bob.com')
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3user = api.get_s3user_by_email('bob@bob.com')
 
         self.assertEqual(s3user.id, 789)
         self.assertEqual(s3user.user, 2)
@@ -102,19 +103,19 @@ class S3TestCase(TestCase):
             call('someurl/s3-users/?endpoint=123&email=bob@bob.com', headers=self.expected_headers),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_get_user_by_email_not_found(self, mock_requests):
         self.setup_get_responses(mock_requests.get, [])
 
-        s3 = S3(self.config, self.user_agent_str)
+        api = DataDeliveryApi(self.config, self.user_agent_str)
         with self.assertRaises(NotFoundException):
-            s3.get_s3user_by_email('tom@tom.com')
+            api.get_s3user_by_email('tom@tom.com')
 
         mock_requests.get.assert_has_calls([
             call('someurl/s3-users/?endpoint=123&email=tom@tom.com', headers=self.expected_headers),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_get_bucket_by_name(self, mock_requests):
         response = [
             {
@@ -126,8 +127,8 @@ class S3TestCase(TestCase):
         ]
         self.setup_get_responses(mock_requests.get, response)
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3_bucket = s3.get_bucket_by_name('some_bucket')
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3_bucket = api.get_bucket_by_name('some_bucket')
 
         self.assertEqual(s3_bucket.id, 444)
         self.assertEqual(s3_bucket.name, 'some_bucket')
@@ -138,19 +139,19 @@ class S3TestCase(TestCase):
             call('someurl/s3-buckets/?name=some_bucket', headers=self.expected_headers),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_get_bucket_by_name_not_found(self, mock_requests):
         self.setup_get_responses(mock_requests.get, [])
 
-        s3 = S3(self.config, self.user_agent_str)
+        api = DataDeliveryApi(self.config, self.user_agent_str)
         with self.assertRaises(NotFoundException):
-            s3.get_bucket_by_name('otherBucket')
+            api.get_bucket_by_name('otherBucket')
 
         mock_requests.get.assert_has_calls([
             call('someurl/s3-buckets/?name=otherBucket', headers=self.expected_headers),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_create_bucket(self, mock_requests):
         self.setup_get_responses(mock_requests.get)
         self.setup_responses(mock_requests.post, [
@@ -162,8 +163,8 @@ class S3TestCase(TestCase):
             }
         ])
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3_bucket = s3.create_bucket('mybucket')
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3_bucket = api.create_bucket('mybucket')
 
         self.assertEqual(s3_bucket.id, 333)
         self.assertEqual(s3_bucket.name, 'mybucket')
@@ -179,7 +180,7 @@ class S3TestCase(TestCase):
             call('someurl/s3-buckets/', headers=self.expected_headers, json=expected_json),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_create_delivery_and_send(self, mock_requests):
         self.setup_get_responses(mock_requests.get)
         self.setup_responses(mock_requests.post, [
@@ -196,8 +197,8 @@ class S3TestCase(TestCase):
             }
         ])
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3_delivery = s3.create_delivery(
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3_delivery = api.create_delivery(
             bucket=MagicMock(id=222),
             to_s3user=MagicMock(id=444),
             user_message='Testing'
@@ -223,7 +224,7 @@ class S3TestCase(TestCase):
             call('someurl/s3-deliveries/', headers=self.expected_headers, json=expected_json),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_send_delivery(self, mock_requests):
         self.setup_get_responses(mock_requests.get)
         self.setup_responses(mock_requests.post, [
@@ -240,8 +241,8 @@ class S3TestCase(TestCase):
             }
         ])
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3_delivery = s3.send_delivery(
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3_delivery = api.send_delivery(
             delivery=MagicMock(id=888)
         )
 
@@ -259,7 +260,7 @@ class S3TestCase(TestCase):
             call('someurl/s3-deliveries/888/send/', headers=self.expected_headers, json={}),
         ])
 
-    @patch('datadelivery.s3.requests')
+    @patch('datadelivery.datadelivery.requests')
     def test_send_delivery_resend(self, mock_requests):
         self.setup_get_responses(mock_requests.get)
         self.setup_responses(mock_requests.post, [
@@ -276,8 +277,8 @@ class S3TestCase(TestCase):
             }
         ])
 
-        s3 = S3(self.config, self.user_agent_str)
-        s3_delivery = s3.send_delivery(
+        api = DataDeliveryApi(self.config, self.user_agent_str)
+        s3_delivery = api.send_delivery(
             delivery=MagicMock(id=888),
             force=True
         )
