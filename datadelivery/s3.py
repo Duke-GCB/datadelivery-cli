@@ -24,7 +24,10 @@ class S3(object):
     def _get_request(self, url_suffix):
         url = self._build_url(url_suffix)
         headers = self._build_headers()
-        response = requests.get(url, headers=headers)
+        try:
+            response = requests.get(url, headers=headers)
+        except requests.exceptions.ConnectionError as ex:
+            raise S3Exception("Failed to connect to {}\n{}".format(self.config.url, ex))
         self._check_response(response)
         return response.json()
 
