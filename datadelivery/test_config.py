@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from unittest import TestCase
 from mock import MagicMock, patch, call, mock_open
 from datadelivery.config import ConfigFile, Config, ConfigSetupAbandoned, \

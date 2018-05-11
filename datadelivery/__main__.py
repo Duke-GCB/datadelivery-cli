@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import sys
 from datadelivery.commands import Commands, APP_NAME
 from datadelivery.argparser import ArgParser

@@ -61,7 +61,7 @@ class S3(object):
         url_suffix = 's3-endpoints/?name={}'.format(self.config.endpoint_name)
         for endpoint_response in self._get_request(url_suffix):
             return S3Endpoint(endpoint_response)
-        raise NotFoundException("No endpoint found for s3 url: {}".format(self.config.s3_url))
+        raise NotFoundException("No endpoint found for s3 url: {}".format(self.config.url))
 
     def get_current_user(self):
         """
