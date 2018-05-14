@@ -24,7 +24,10 @@ class S3(object):
     def _get_request(self, url_suffix):
         url = self._build_url(url_suffix)
         headers = self._build_headers()
-        response = requests.get(url, headers=headers)
+        try:
+            response = requests.get(url, headers=headers)
+        except requests.exceptions.ConnectionError as ex:
+            raise S3Exception("Failed to connect to {}\n{}".format(self.config.url, ex))
         self._check_response(response)
         return response.json()
 
@@ -40,7 +43,18 @@ class S3(object):
         try:
             response.raise_for_status()
         except requests.HTTPError:
-            raise S3Exception(response.text)
+            raise S3Exception(S3.make_message_for_http_error(response))
+
+    @staticmethod
+    def make_message_for_http_error(response):
+        message = response.text
+        try:
+            data = response.json()
+            if 'detail' in data:
+                message = data['detail']
+        except ValueError:
+            pass  # response was not JSON
+        return message
 
     def _get_current_endpoint(self):
         """
@@ -50,7 +64,7 @@ class S3(object):
         url_suffix = 's3-endpoints/?name={}'.format(self.config.endpoint_name)
         for endpoint_response in self._get_request(url_suffix):
             return S3Endpoint(endpoint_response)
-        raise NotFoundException("No endpoint found for s3 url: {}".format(self.config.s3_url))
+        raise NotFoundException("No endpoint found for s3 url: {}".format(self.config.url))
 
     def get_current_user(self):
         """
