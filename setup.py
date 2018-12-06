@@ -7,7 +7,7 @@ setup(name='datadelivery',
       license='MIT',
       packages=['datadelivery'],
       install_requires=[
-          'requests',
+          'requests>=2.20.0',
           'PyYAML',
           'six',
       ],
